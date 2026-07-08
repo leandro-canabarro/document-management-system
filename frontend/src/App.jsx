@@ -1,20 +1,38 @@
-// Seed do componente raiz do Document Management System.
-//
-// Este é apenas um ponto de partida mínimo. Durante o Passo 3 você vai usar o
-// Agent Mode do GitHub Copilot para construir os componentes:
-//   - components/UploadComponent
-//   - components/DocumentList
-//   - components/DownloadButton
-// e o serviço services/ que consome a API do backend via fetch.
+import { useState, useEffect, useCallback } from 'react';
+import { listDocuments } from './services/api';
+import UploadComponent from './components/UploadComponent';
+import DocumentList from './components/DocumentList';
 
 export default function App() {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
+
+  const fetchDocuments = useCallback(async () => {
+    setLoading(true);
+    setErro('');
+    try {
+      const docs = await listDocuments();
+      setDocuments(docs);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
+    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1>Document Management System</h1>
-      <p>
-        Seed do frontend. Construa a interface durante o Passo 3 usando o Agent
-        Mode do GitHub Copilot.
-      </p>
+      <UploadComponent onUpload={fetchDocuments} />
+      <h2>Documentos</h2>
+      {loading && <p>Carregando…</p>}
+      {erro && <p style={{ color: 'red' }}>{erro}</p>}
+      {!loading && !erro && <DocumentList documents={documents} />}
     </main>
   );
 }
